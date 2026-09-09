@@ -511,7 +511,9 @@ enum Extensions_Sum {
     /* 0x55,0x1d,0x49  */
     ALT_SIG_ALG_OID             = 187,           /* 2.5.29.73 */
     /* 0x55,0x1d,0x4a  */
-    ALT_SIG_VAL_OID             = 188            /* 2.5.29.74 */
+    ALT_SIG_VAL_OID             = 188,           /* 2.5.29.74 */
+    /* 0x2b,0x06,0x01,0x04,0x01,0x82,0xda,0x4b,0x2f,0x02  */
+    MTC_CA_OID                  = 527            /* 1.3.6.1.4.1.44363.47.2 */
 #else
     /* 0x55,0x1d,0x13  */
     BASIC_CA_OID                = 0x7fec1daa,    /* 2.5.29.19 */
@@ -572,7 +574,9 @@ enum Extensions_Sum {
     /* 0x55,0x1d,0x49  */
     ALT_SIG_ALG_OID             = 0x7fb61daa,    /* 2.5.29.73 */
     /* 0x55,0x1d,0x4a  */
-    ALT_SIG_VAL_OID             = 0x7fb51daa     /* 2.5.29.74 */
+    ALT_SIG_VAL_OID             = 0x7fb51daa,    /* 2.5.29.74 */
+    /* 0x2b,0x06,0x01,0x04,0x01,0x82,0xda,0x4b,0x2f,0x02  */
+    MTC_CA_OID                  = 0x4fdb86fa     /* 1.3.6.1.4.1.44363.47.2 */
 #endif
 };
 
@@ -1685,7 +1689,9 @@ enum Ctc_SigType {
     /* 0x2b,0x06,0x01,0x05,0x05,0x07,0x06,0x22  */
     CTC_XMSS                    = 107,           /* 1.3.6.1.5.5.7.6.34 */
     /* 0x2b,0x06,0x01,0x05,0x05,0x07,0x06,0x23  */
-    CTC_XMSSMT                  = 108            /* 1.3.6.1.5.5.7.6.35 */
+    CTC_XMSSMT                  = 108,           /* 1.3.6.1.5.5.7.6.35 */
+    /* 0x2b,0x06,0x01,0x04,0x01,0x82,0xda,0x4b,0x2f,0x00  */
+    CTC_MTC_PROOF               = 100525         /* 1.3.6.1.4.1.44363.47.0 */
 #else
     /* 0x2a,0x86,0x48,0xce,0x38,0x04,0x03  */
     CTC_SHAwDSA                 = 0x314b8212,    /* 1.2.840.10040.4.3 */
@@ -1784,7 +1790,9 @@ enum Ctc_SigType {
     /* 0x2b,0x06,0x01,0x05,0x05,0x07,0x06,0x22  */
     CTC_XMSS                    = 0x2707012e,    /* 1.3.6.1.5.5.7.6.34 */
     /* 0x2b,0x06,0x01,0x05,0x05,0x07,0x06,0x23  */
-    CTC_XMSSMT                  = 0x2607012e     /* 1.3.6.1.5.5.7.6.35 */
+    CTC_XMSSMT                  = 0x2607012e,    /* 1.3.6.1.5.5.7.6.35 */
+    /* 0x2b,0x06,0x01,0x04,0x01,0x82,0xda,0x4b,0x2f,0x00  */
+    CTC_MTC_PROOF               = 0x4fdb84fa     /* 1.3.6.1.4.1.44363.47.0 */
 #endif
 };
 

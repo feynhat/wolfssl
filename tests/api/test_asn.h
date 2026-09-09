@@ -36,8 +36,10 @@ int test_wc_DecodeRsaPssParams(void);
 int test_SerialNumber0_RootCA(void);
 int test_DecodeAltNames_length_underflow(void);
 int test_DecodeCertExtensions_dup_certpol(void);
+int test_DecodeExtensionType_mtc_ca(void);
 int test_ParseCert_SM3wSM2_short_pubkey(void);
 int test_ParseCert_dnBufferBoundary(void);
+int test_SetAlgoID_idAlgMTCProof(void);
 int test_wc_DecodeObjectId(void);
 int test_ToTraditional_ex_handcrafted(void);
 int test_ToTraditional_ex_roundtrip(void);
@@ -59,8 +61,10 @@ int test_wc_AsnFeatureCoverage(void);
     TEST_DECL_GROUP("asn", test_SerialNumber0_RootCA),              \
     TEST_DECL_GROUP("asn", test_DecodeAltNames_length_underflow),   \
     TEST_DECL_GROUP("asn", test_DecodeCertExtensions_dup_certpol),  \
+    TEST_DECL_GROUP("asn", test_DecodeExtensionType_mtc_ca),        \
     TEST_DECL_GROUP("asn", test_ParseCert_SM3wSM2_short_pubkey),    \
     TEST_DECL_GROUP("asn", test_ParseCert_dnBufferBoundary),        \
+    TEST_DECL_GROUP("asn", test_SetAlgoID_idAlgMTCProof),           \
     TEST_DECL_GROUP("asn", test_wc_DecodeObjectId),                 \
     TEST_DECL_GROUP("asn", test_ToTraditional_ex_handcrafted),      \
     TEST_DECL_GROUP("asn", test_ToTraditional_ex_roundtrip),        \

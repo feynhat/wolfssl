@@ -4643,6 +4643,30 @@ WOLFSSL_API void* wolfSSL_CTX_GetHeap(WOLFSSL_CTX* ctx, WOLFSSL* ssl);
 
 /* TLS Extensions */
 
+#ifdef WOLFSSL_MTC
+    /* draft-ietf-tls-trust-anchor-ids has not yet been assigned an IANA
+     * ExtensionType. Use a private-use value for experiments unless the
+     * application and peer agree on another value at build time. */
+    #ifndef WOLFSSL_TRUST_ANCHORS_EXT_TYPE
+        #define WOLFSSL_TRUST_ANCHORS_EXT_TYPE 0xffa6
+    #endif
+
+    #if defined(WOLFSSL_TLS13) && defined(HAVE_TLS_EXTENSIONS)
+    /* Configure the TLS 1.3 trust_anchors ClientHello extension. ids contains
+     * a sequence of one-byte-length-prefixed binary TrustAnchorID values; the
+     * two-byte RequestedTrustAnchorList length is added by wolfSSL. */
+    WOLFSSL_API int wolfSSL_UseTrustAnchorIDs(WOLFSSL* ssl,
+        const unsigned char* ids, unsigned short idsSz);
+
+    /* Get the sequence of one-byte-length-prefixed TrustAnchorID values sent
+     * by the peer. The returned storage is owned by ssl and remains valid
+     * until the peer IDs are replaced, wolfSSL_clear() is called, or ssl is
+     * freed. */
+    WOLFSSL_API int wolfSSL_GetPeerTrustAnchorIDs(WOLFSSL* ssl,
+        const unsigned char** ids, unsigned short* idsSz);
+    #endif
+#endif /* WOLFSSL_MTC */
+
 /* Server Name Indication */
 #ifdef HAVE_SNI
 

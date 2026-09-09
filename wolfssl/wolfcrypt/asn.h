@@ -1019,6 +1019,16 @@ extern const WOLFSSL_ObjectInfo wolfssl_object_info[];
 #define WC_NID_tlsfeature TLS_FEATURE_OID              /* id-pe 24 */
 #define WC_NID_buildingName 1494
 
+#define WC_SN_id_alg_mtcProof "id-alg-mtcProof"
+#define WC_LN_id_alg_mtcProof "id-alg-mtcProof"
+#define WC_NID_id_alg_mtcProof CTC_MTC_PROOF
+
+#define WC_SN_id_pe_mtcCertificationAuthority \
+    "id-pe-mtcCertificationAuthority"
+#define WC_LN_id_pe_mtcCertificationAuthority \
+    "id-pe-mtcCertificationAuthority"
+#define WC_NID_id_pe_mtcCertificationAuthority MTC_CA_OID
+
 #define WC_SN_dnQualifier "dnQualifier"
 #define WC_LN_dnQualifier "dnQualifier"
 #define WC_NID_dnQualifier 174              /* 2.5.4.46 */
@@ -1155,6 +1165,17 @@ extern const WOLFSSL_ObjectInfo wolfssl_object_info[];
 #define NID_inhibit_any_policy WC_NID_inhibit_any_policy
 #define NID_tlsfeature WC_NID_tlsfeature
 #define NID_buildingName WC_NID_buildingName
+
+#define SN_id_alg_mtcProof WC_SN_id_alg_mtcProof
+#define LN_id_alg_mtcProof WC_LN_id_alg_mtcProof
+#define NID_id_alg_mtcProof WC_NID_id_alg_mtcProof
+
+#define SN_id_pe_mtcCertificationAuthority \
+    WC_SN_id_pe_mtcCertificationAuthority
+#define LN_id_pe_mtcCertificationAuthority \
+    WC_LN_id_pe_mtcCertificationAuthority
+#define NID_id_pe_mtcCertificationAuthority \
+    WC_NID_id_pe_mtcCertificationAuthority
 
 #define SN_dnQualifier WC_SN_dnQualifier
 #define LN_dnQualifier WC_LN_dnQualifier
@@ -2254,6 +2275,15 @@ struct DecodedCert {
     DNS_entry altNamePool[WC_ASN_MAX_ALTNAMES];
     word32    altNamePoolUsed;
 #endif
+#ifdef WOLFSSL_MTC
+    /* id-pe-mtcCertificationAuthority extension contents. */
+    word32 extMtcCaLogHashOID;
+    word32 extMtcCaSigOID;
+    word64 extMtcCaMinSerial;
+    word64 extMtcCaMaxSerial;
+    WC_BITFIELD extMtcCaSet:1;
+    WC_BITFIELD extMtcCaCrit:1;
+#endif /* WOLFSSL_MTC */
 };
 
 #if defined(WOLFSSL_SM2) && defined(WOLFSSL_SM3)

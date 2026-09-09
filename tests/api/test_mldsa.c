@@ -30320,6 +30320,9 @@ int test_mldsa_x509_pubkey_sigtype(void)
     for (i = 0; i < n; i++) {
         WOLFSSL_X509*    x509  = NULL;
         WOLFSSL_EVP_PKEY* pkey = NULL;
+    #ifndef NO_BIO
+        WOLFSSL_BIO*      bio   = NULL;
+    #endif
         int sig_oid;
         int base_id;
 
@@ -30342,6 +30345,15 @@ int test_mldsa_x509_pubkey_sigtype(void)
             ExpectIntEQ(base_id, WC_EVP_PKEY_DILITHIUM);
             wolfSSL_EVP_PKEY_free(pkey);
         }
+
+    #ifndef NO_BIO
+        /* The OpenSSL-compatible text printer must handle ML-DSA SPKI. */
+        ExpectNotNull(bio = wolfSSL_BIO_new(wolfSSL_BIO_s_mem()));
+        if (bio != NULL) {
+            ExpectIntEQ(wolfSSL_X509_print(bio, x509), WOLFSSL_SUCCESS);
+            wolfSSL_BIO_free(bio);
+        }
+    #endif
 
         wolfSSL_X509_free(x509);
     }

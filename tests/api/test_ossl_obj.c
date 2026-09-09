@@ -270,12 +270,24 @@ int test_wolfSSL_OBJ_txt2nid(void)
 #if defined(OPENSSL_EXTRA) || defined(OPENSSL_EXTRA_X509_SMALL) || \
     defined(WOLFSSL_APACHE_HTTPD)
     int i;
+#if defined(OPENSSL_EXTRA) && !defined(NO_CERTS)
+    ASN1_OBJECT* obj = NULL;
+    char oidStr[32];
+#endif
     static const struct {
         const char* sn;
         const char* ln;
         const char* oid;
         int nid;
     } testVals[] = {
+#if defined(OPENSSL_EXTRA) && !defined(NO_CERTS)
+        { SN_id_alg_mtcProof, LN_id_alg_mtcProof,
+                    "1.3.6.1.4.1.44363.47.0", NID_id_alg_mtcProof },
+        { SN_id_pe_mtcCertificationAuthority,
+                    LN_id_pe_mtcCertificationAuthority,
+                    "1.3.6.1.4.1.44363.47.2",
+                    NID_id_pe_mtcCertificationAuthority },
+#endif
 #ifdef WOLFSSL_APACHE_HTTPD
         { "tlsfeature", "TLS Feature", "1.3.6.1.5.5.7.1.24", NID_tlsfeature },
         { "id-on-dnsSRV", "SRVName", "1.3.6.1.5.5.7.8.7",
@@ -296,6 +308,26 @@ int test_wolfSSL_OBJ_txt2nid(void)
         ExpectIntEQ(OBJ_txt2nid(testVals[i].ln), testVals[i].nid);
         ExpectIntEQ(OBJ_txt2nid(testVals[i].oid), testVals[i].nid);
     }
+
+#if defined(OPENSSL_EXTRA) && !defined(NO_CERTS)
+    /* CopyDecodedSig() needs this conversion when creating WOLFSSL_X509. */
+    ExpectNotNull(obj = OBJ_nid2obj(NID_id_alg_mtcProof));
+    if (obj != NULL) {
+        ExpectIntEQ(OBJ_obj2nid(obj), NID_id_alg_mtcProof);
+        ExpectIntEQ(OBJ_obj2txt(oidStr, (int)sizeof(oidStr), obj, 1), 22);
+        ExpectStrEQ(oidStr, "1.3.6.1.4.1.44363.47.0");
+    }
+    ASN1_OBJECT_free(obj);
+    obj = NULL;
+
+    ExpectNotNull(obj = OBJ_nid2obj(NID_id_pe_mtcCertificationAuthority));
+    if (obj != NULL) {
+        ExpectIntEQ(OBJ_obj2nid(obj), NID_id_pe_mtcCertificationAuthority);
+        ExpectIntEQ(OBJ_obj2txt(oidStr, (int)sizeof(oidStr), obj, 1), 22);
+        ExpectStrEQ(oidStr, "1.3.6.1.4.1.44363.47.2");
+    }
+    ASN1_OBJECT_free(obj);
+#endif
 #endif
     return EXPECT_RESULT();
 }
@@ -337,6 +369,24 @@ int test_wolfSSL_OBJ_txt2obj(void)
     ExpectNull(obj = OBJ_txt2obj(NULL, 0));
     ASN1_OBJECT_free(obj);
     obj = NULL;
+
+#if defined(OPENSSL_EXTRA) && !defined(NO_CERTS)
+    /* Numerical objects have no OID group. Ensure exact OID matching resolves
+     * the old-sum collision with ecdsa-with-SHA384. */
+    ExpectNotNull(obj = OBJ_txt2obj("1.3.6.1.4.1.44363.47.0", 1));
+    if (obj != NULL) {
+        ExpectIntEQ(OBJ_obj2nid(obj), NID_id_alg_mtcProof);
+    }
+    ASN1_OBJECT_free(obj);
+    obj = NULL;
+
+    ExpectNotNull(obj = OBJ_txt2obj("1.3.6.1.4.1.44363.47.2", 1));
+    if (obj != NULL) {
+        ExpectIntEQ(OBJ_obj2nid(obj), NID_id_pe_mtcCertificationAuthority);
+    }
+    ASN1_OBJECT_free(obj);
+    obj = NULL;
+#endif
 
     for (i = 0; objs_list[i].oidStr != NULL; i++) {
         /* Test numerical value of oid (oidStr) */
@@ -462,4 +512,3 @@ int test_wolfSSL_OBJ_sn(void)
 #endif
     return EXPECT_RESULT();
 }
-

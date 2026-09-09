@@ -1577,6 +1577,63 @@ int test_DecodeCertExtensions_dup_certpol(void)
     return EXPECT_RESULT();
 }
 
+int test_DecodeExtensionType_mtc_ca(void)
+{
+    EXPECT_DECLS;
+
+#if defined(WOLFSSL_MTC) && defined(WOLFSSL_HAVE_MLDSA) && \
+    !defined(NO_SHA256) && !defined(NO_CERTS) && !defined(NO_ASN)
+    static const byte mtcCa[] = {
+        0x30, 0x2c,
+            /* logHash: id-sha256, parameters absent. */
+            0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
+                0x65, 0x03, 0x04, 0x02, 0x01,
+            /* sigAlg: id-ml-dsa-44, parameters absent. */
+            0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
+                0x65, 0x03, 0x04, 0x03, 0x11,
+            0x02, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x02, 0x07, 0x05, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+    byte malformed[sizeof(mtcCa)];
+    DecodedCert cert;
+    int isUnknown = -1;
+
+    wc_InitDecodedCert(&cert, mtcCa, (word32)sizeof(mtcCa), NULL);
+    ExpectIntEQ(DecodeExtensionType(mtcCa, (word32)sizeof(mtcCa),
+        MTC_CA_OID, 1, &cert, &isUnknown), 0);
+    ExpectIntEQ(isUnknown, 0);
+    ExpectIntEQ(cert.extMtcCaSet, 1);
+    ExpectIntEQ(cert.extMtcCaCrit, 1);
+    ExpectIntEQ(cert.extMtcCaLogHashOID, SHA256h);
+    ExpectIntEQ(cert.extMtcCaSigOID, CTC_ML_DSA_44);
+    ExpectTrue(cert.extMtcCaMinSerial == W64LIT(0x0001000000000000));
+    ExpectTrue(cert.extMtcCaMaxSerial == W64LIT(0x0005ffffffffffff));
+
+    /* RFC 5280 forbids duplicate extensions. */
+    ExpectIntEQ(DecodeExtensionType(mtcCa, (word32)sizeof(mtcCa),
+        MTC_CA_OID, 1, &cert, &isUnknown),
+        WC_NO_ERR_TRACE(ASN_OBJECT_ID_E));
+    wc_FreeDecodedCert(&cert);
+
+    /* The ASN.1 schema constrains both INTEGERs to non-negative uint64. */
+    XMEMCPY(malformed, mtcCa, sizeof(mtcCa));
+    malformed[30] = 0x81;
+    wc_InitDecodedCert(&cert, malformed, (word32)sizeof(malformed), NULL);
+    ExpectIntEQ(DecodeExtensionType(malformed, (word32)sizeof(malformed),
+        MTC_CA_OID, 1, &cert, &isUnknown), WC_NO_ERR_TRACE(ASN_PARSE_E));
+    wc_FreeDecodedCert(&cert);
+
+    /* The MTC draft requires this extension to be critical. */
+    wc_InitDecodedCert(&cert, mtcCa, (word32)sizeof(mtcCa), NULL);
+    ExpectIntEQ(DecodeExtensionType(mtcCa, (word32)sizeof(mtcCa),
+        MTC_CA_OID, 0, &cert, &isUnknown),
+        WC_NO_ERR_TRACE(ASN_CRIT_EXT_E));
+    wc_FreeDecodedCert(&cert);
+#endif
+
+    return EXPECT_RESULT();
+}
+
 int test_ParseCert_SM3wSM2_short_pubkey(void)
 {
     EXPECT_DECLS;
@@ -2003,6 +2060,29 @@ int test_SerialNumber0_RootCA(void)
           !WOLFSSL_ASN_ALLOW_0_SERIAL &&
           !WOLFSSL_TEST_APPLE_NATIVE_CERT_VALIDATION */
 #endif /* !NO_CERTS && !NO_FILESYSTEM && !NO_RSA && !WOLFSSL_NO_PEM */
+
+    return EXPECT_RESULT();
+}
+
+int test_SetAlgoID_idAlgMTCProof(void)
+{
+    EXPECT_DECLS;
+
+#if !defined(NO_ASN)
+    {
+        /* id-alg-mtcProof uses absent AlgorithmIdentifier parameters. */
+        static const byte mtcAlgoId[] = {
+            0x30, 0x0c, 0x06, 0x0a, 0x2b, 0x06, 0x01,
+            0x04, 0x01, 0x82, 0xda, 0x4b, 0x2f, 0x00
+        };
+        byte encoded[sizeof(mtcAlgoId)];
+        word32 encodedSz;
+
+        encodedSz = SetAlgoID(CTC_MTC_PROOF, encoded, oidSigType, 0);
+        ExpectIntEQ((int)encodedSz, (int)sizeof(mtcAlgoId));
+        ExpectBufEQ(encoded, mtcAlgoId, sizeof(mtcAlgoId));
+    }
+#endif /* !NO_ASN */
 
     return EXPECT_RESULT();
 }

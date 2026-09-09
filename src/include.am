@@ -40,6 +40,17 @@ EXTRA_DIST += src/ssl_sess.c
 EXTRA_DIST += src/ssl_sk.c
 EXTRA_DIST += src/x509.c
 EXTRA_DIST += src/x509_str.c
+EXTRA_DIST += src/mtc/README.md
+EXTRA_DIST += src/mtc/cosign.c
+EXTRA_DIST += src/mtc/cosign.h
+EXTRA_DIST += src/mtc/mtc_cert.c
+EXTRA_DIST += src/mtc/mtc_cert.h
+EXTRA_DIST += src/mtc/mtc_parse.c
+EXTRA_DIST += src/mtc/mtc_parse.h
+EXTRA_DIST += src/mtc/trust_anchors.c
+EXTRA_DIST += src/mtc/trust_anchors.h
+EXTRA_DIST += src/mtc/verify.c
+EXTRA_DIST += src/mtc/verify.h
 
 $(FIPS_FILES):
 	$(AM_V_at)touch $(srcdir)/$@

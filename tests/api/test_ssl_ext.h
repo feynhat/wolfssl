@@ -42,6 +42,7 @@ int test_wolfSSL_next_proto_cb_ext(void);
 int test_wolfSSL_tlsext_status_exts_ids_ext(void);
 int test_wolfSSL_SNI_GetFromBuffer_inval_ext(void);
 int test_wolfSSL_UseTrustedCA_inval_ext(void);
+int test_wolfSSL_UseTrustAnchorIDs_ext(void);
 int test_wolfSSL_UseMaxFragment_inval_ext(void);
 int test_wolfSSL_set1_groups_inval_ext(void);
 int test_wolfSSL_UseALPN_inval_ext(void);
@@ -80,6 +81,7 @@ int test_wolfSSL_dual_alg_cks_parse_ext(void);
         TEST_DECL_GROUP("ssl_ext",                                            \
             test_wolfSSL_SNI_GetFromBuffer_inval_ext),                        \
         TEST_DECL_GROUP("ssl_ext", test_wolfSSL_UseTrustedCA_inval_ext),       \
+        TEST_DECL_GROUP("ssl_ext", test_wolfSSL_UseTrustAnchorIDs_ext),       \
         TEST_DECL_GROUP("ssl_ext", test_wolfSSL_UseMaxFragment_inval_ext),     \
         TEST_DECL_GROUP("ssl_ext", test_wolfSSL_set1_groups_inval_ext),        \
         TEST_DECL_GROUP("ssl_ext", test_wolfSSL_UseALPN_inval_ext),            \

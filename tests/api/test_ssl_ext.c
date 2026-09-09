@@ -614,6 +614,146 @@ int test_wolfSSL_UseTrustedCA_inval_ext(void)
     return EXPECT_RESULT();
 }
 
+int test_wolfSSL_UseTrustAnchorIDs_ext(void)
+{
+    EXPECT_DECLS;
+#if defined(WOLFSSL_MTC) && defined(WOLFSSL_TLS13) && \
+    defined(HAVE_TLS_EXTENSIONS) && \
+    !defined(NO_WOLFSSL_CLIENT) && !defined(NO_TLS)
+    static const byte expectedIds[] = {
+        2, 0x81, 0x01,
+        5, 0x81, 0x01, 0x01, 0x08, 0x2a
+    };
+    byte ids[sizeof(expectedIds)];
+    const byte emptyId[] = { 0 };
+    const byte truncatedId[] = { 2, 0x2b };
+    const byte availableExtension[] = {
+        (byte)(WOLFSSL_TRUST_ANCHORS_EXT_TYPE >> 8),
+        (byte)WOLFSSL_TRUST_ANCHORS_EXT_TYPE,
+        0, 6, 0, 4, 3, 0x2b, 0x01, 0x01
+    };
+    const byte emptyAvailableExtension[] = {
+        (byte)(WOLFSSL_TRUST_ANCHORS_EXT_TYPE >> 8),
+        (byte)WOLFSSL_TRUST_ANCHORS_EXT_TYPE,
+        0, 2, 0, 0
+    };
+    const byte certificateExtension[] = {
+        (byte)(WOLFSSL_TRUST_ANCHORS_EXT_TYPE >> 8),
+        (byte)WOLFSSL_TRUST_ANCHORS_EXT_TYPE,
+        0, 0
+    };
+    const byte badCertificateExtension[] = {
+        (byte)(WOLFSSL_TRUST_ANCHORS_EXT_TYPE >> 8),
+        (byte)WOLFSSL_TRUST_ANCHORS_EXT_TYPE,
+        0, 2, 0, 0
+    };
+    const byte requestedExtension[] = {
+        (byte)(WOLFSSL_TRUST_ANCHORS_EXT_TYPE >> 8),
+        (byte)WOLFSSL_TRUST_ANCHORS_EXT_TYPE,
+        0, 11, 0, 9,
+        2, 0x81, 0x01,
+        5, 0x81, 0x01, 0x01, 0x08, 0x2a
+    };
+    byte output[64];
+    word32 outputLength = 0;
+    word32 outputOffset = 0;
+    const byte* peerIds = NULL;
+    word16 peerIdsSz = 0;
+    Suites* suites = NULL;
+    WOLFSSL_CTX* ctx = NULL;
+    WOLFSSL* ssl = NULL;
+
+    XMEMCPY(ids, expectedIds, sizeof(ids));
+    XMEMSET(output, 0, sizeof(output));
+
+    ExpectIntEQ(wolfSSL_UseTrustAnchorIDs(NULL, ids, (word16)sizeof(ids)),
+        WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(NULL, &peerIds, &peerIdsSz),
+        WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectNotNull(ctx = wolfSSL_CTX_new(wolfTLSv1_3_client_method()));
+    ExpectNotNull(ssl = wolfSSL_new(ctx));
+    if (ssl != NULL)
+        suites = (Suites*)WOLFSSL_SUITES(ssl);
+
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, NULL, &peerIdsSz),
+        WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, &peerIds, NULL),
+        WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, &peerIds, &peerIdsSz),
+        WOLFSSL_FAILURE);
+
+    ExpectIntEQ(wolfSSL_UseTrustAnchorIDs(ssl, NULL, 1),
+        WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wolfSSL_UseTrustAnchorIDs(ssl, emptyId,
+        (word16)sizeof(emptyId)), WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+    ExpectIntEQ(wolfSSL_UseTrustAnchorIDs(ssl, truncatedId,
+        (word16)sizeof(truncatedId)), WC_NO_ERR_TRACE(BAD_FUNC_ARG));
+
+    /* An empty requested list is permitted by the draft. Setting a valid
+     * list afterwards also exercises replacement of the extension data. */
+    ExpectIntEQ(wolfSSL_UseTrustAnchorIDs(ssl, NULL, 0), WOLFSSL_SUCCESS);
+    ExpectIntEQ(wolfSSL_UseTrustAnchorIDs(ssl, ids, (word16)sizeof(ids)),
+        WOLFSSL_SUCCESS);
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, &peerIds, &peerIdsSz),
+        WOLFSSL_FAILURE);
+    ids[1] ^= 0xffU;
+
+    ExpectIntEQ(TLSX_GetRequestSize(ssl, client_hello, &outputLength), 0);
+    ExpectIntEQ(outputLength, (word32)(8U + sizeof(expectedIds)));
+    ExpectIntEQ(TLSX_WriteRequest(ssl, output, client_hello, &outputOffset),
+        0);
+    ExpectIntEQ(outputOffset, outputLength);
+    ExpectIntEQ(output[0], 0);
+    ExpectIntEQ(output[1], (byte)(6U + sizeof(expectedIds)));
+    ExpectIntEQ(output[2],
+        (byte)(WOLFSSL_TRUST_ANCHORS_EXT_TYPE >> 8));
+    ExpectIntEQ(output[3], (byte)WOLFSSL_TRUST_ANCHORS_EXT_TYPE);
+    ExpectIntEQ(output[4], 0);
+    ExpectIntEQ(output[5], (byte)(2U + sizeof(expectedIds)));
+    ExpectIntEQ(output[6], 0);
+    ExpectIntEQ(output[7], (byte)sizeof(expectedIds));
+    ExpectIntEQ(XMEMCMP(output + 8, expectedIds, sizeof(expectedIds)), 0);
+
+    /* A server retains a copy of the requested list for certificate selection
+     * after ClientHello parsing. The message type selects that parser path;
+     * this client-side WOLFSSL is only a test vehicle because a server-side
+     * object requires a certificate at construction in this configuration. */
+    ExpectIntEQ(TLSX_Parse(ssl, requestedExtension,
+        (word16)sizeof(requestedExtension), client_hello, suites), 0);
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, &peerIds, &peerIdsSz),
+        WOLFSSL_SUCCESS);
+    ExpectIntEQ(peerIdsSz, (word16)sizeof(expectedIds));
+    ExpectNotNull(peerIds);
+    ExpectIntEQ(XMEMCMP(peerIds, expectedIds, sizeof(expectedIds)), 0);
+
+    /* The corresponding server forms are a non-empty available list in
+     * EncryptedExtensions and an empty selection marker in Certificate. */
+    ExpectIntEQ(TLSX_Parse(ssl, availableExtension,
+        (word16)sizeof(availableExtension), encrypted_extensions, NULL), 0);
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, &peerIds, &peerIdsSz),
+        WOLFSSL_SUCCESS);
+    ExpectIntEQ(peerIdsSz, (word16)(sizeof(availableExtension) - 6U));
+    ExpectIntEQ(XMEMCMP(peerIds, availableExtension + 6, peerIdsSz), 0);
+    ExpectIntEQ(TLSX_Parse(ssl, emptyAvailableExtension,
+        (word16)sizeof(emptyAvailableExtension), encrypted_extensions, NULL),
+        WC_NO_ERR_TRACE(BUFFER_ERROR));
+    ExpectIntEQ(TLSX_Parse(ssl, certificateExtension,
+        (word16)sizeof(certificateExtension), certificate, NULL), 0);
+    ExpectIntEQ(TLSX_Parse(ssl, badCertificateExtension,
+        (word16)sizeof(badCertificateExtension), certificate, NULL),
+        WC_NO_ERR_TRACE(BUFFER_ERROR));
+
+    /* Reusing a WOLFSSL object must not retain the previous peer's list. */
+    ExpectIntEQ(wolfSSL_clear(ssl), WOLFSSL_SUCCESS);
+    ExpectIntEQ(wolfSSL_GetPeerTrustAnchorIDs(ssl, &peerIds, &peerIdsSz),
+        WOLFSSL_FAILURE);
+
+    wolfSSL_free(ssl);
+    wolfSSL_CTX_free(ctx);
+#endif
+    return EXPECT_RESULT();
+}
+
 int test_wolfSSL_UseMaxFragment_inval_ext(void)
 {
     EXPECT_DECLS;

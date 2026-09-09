@@ -9073,6 +9073,12 @@ static void FreeSSL_Extensions(WOLFSSL* ssl)
         ssl->alpn_peer_requested_length = 0;
     }
 #endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+    XFREE(ssl->peerTrustAnchorIds, ssl->heap, DYNAMIC_TYPE_TLSX);
+    ssl->peerTrustAnchorIds = NULL;
+    ssl->peerTrustAnchorIdsSz = 0;
+    ssl->peerTrustAnchorIdsPresent = 0;
+#endif
 }
 #endif /* HAVE_TLS_EXTENSIONS */
 

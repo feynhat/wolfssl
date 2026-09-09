@@ -654,6 +654,14 @@ add_option("WOLFSSL_TLS13"
     "Enable wolfSSL TLS v1.3 (default: enabled)"
     "yes" "yes;no")
 
+add_option("WOLFSSL_MTC"
+    "Enable Merkle Tree Certificate support (default: disabled)"
+    "no" "yes;no")
+
+add_option("WOLFSSL_CERT_SETUP_CB"
+    "Enable support for dynamically loading TLS certificates (default: disabled)"
+    "no" "yes;no")
+
 if("${FIPS_VERSION}" STREQUAL "v1")
     override_cache(WOLFSSL_TLS13 "no")
 endif()
@@ -2462,6 +2470,17 @@ if (WOLFSSL_TLS13)
         "-DWOLFSSL_TLS13"
         "-DHAVE_TLS_EXTENSIONS"
         )
+endif()
+
+if(WOLFSSL_MTC)
+    if(NOT WOLFSSL_TLS13)
+        message(FATAL_ERROR "MTC requires TLS 1.3 (WOLFSSL_TLS13)")
+    endif()
+    list(APPEND WOLFSSL_DEFINITIONS "-DWOLFSSL_MTC")
+endif()
+
+if(WOLFSSL_CERT_SETUP_CB)
+    list(APPEND WOLFSSL_DEFINITIONS "-DWOLFSSL_CERT_SETUP_CB")
 endif()
 
 # Session Ticket Extension
@@ -4331,6 +4350,26 @@ if(WOLFSSL_EXAMPLES)
     set_property(TARGET echoclient
                  PROPERTY RUNTIME_OUTPUT_DIRECTORY
                  ${WOLFSSL_OUTPUT_BASE}/examples/echoclient)
+
+    if(WOLFSSL_MTC)
+        add_executable(mtc_tls13_client
+            ${CMAKE_CURRENT_SOURCE_DIR}/examples/mtc/mtc_tls13_client.c)
+        target_link_libraries(mtc_tls13_client wolfssl)
+        target_compile_definitions(mtc_tls13_client PRIVATE
+            ${WOLFSSL_DEFINITIONS})
+        set_property(TARGET mtc_tls13_client
+                     PROPERTY RUNTIME_OUTPUT_DIRECTORY
+                     ${WOLFSSL_OUTPUT_BASE}/examples/mtc)
+
+        add_executable(mtc_tls13_server
+            ${CMAKE_CURRENT_SOURCE_DIR}/examples/mtc/mtc_tls13_server.c)
+        target_link_libraries(mtc_tls13_server wolfssl)
+        target_compile_definitions(mtc_tls13_server PRIVATE
+            ${WOLFSSL_DEFINITIONS})
+        set_property(TARGET mtc_tls13_server
+                     PROPERTY RUNTIME_OUTPUT_DIRECTORY
+                     ${WOLFSSL_OUTPUT_BASE}/examples/mtc)
+    endif()
 
     # Build echo server example
     add_executable(echoserver

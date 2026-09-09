@@ -2486,6 +2486,13 @@ then
     ENABLED_TLS13="no"
 fi
 
+# Merkle Tree Certificate support
+AC_ARG_ENABLE([mtc],
+    [AS_HELP_STRING([--enable-mtc],[Enable Merkle Tree Certificate support (default: disabled)])],
+    [ ENABLED_MTC=$enableval ],
+    [ ENABLED_MTC=no ]
+    )
+
 # QUIC support
 AC_ARG_ENABLE([quic],
     [AS_HELP_STRING([--enable-quic],[Enable QUIC API with wolfSSL TLS v1.3 (default: disabled)])],
@@ -8970,6 +8977,15 @@ then
     AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_TLS13 -DHAVE_TLS_EXTENSIONS"
 fi
 
+if test "$ENABLED_MTC" = "yes"
+then
+    if test "$ENABLED_TLS13" != "yes"
+    then
+        AC_MSG_ERROR([--enable-mtc requires TLS 1.3])
+    fi
+    AM_CFLAGS="$AM_CFLAGS -DWOLFSSL_MTC"
+fi
+
 
 # Session Ticket Extension
 AC_ARG_ENABLE([session-ticket],
@@ -13044,6 +13060,7 @@ AM_CONDITIONAL([BUILD_FASTMATH],[test "x$ENABLED_FASTMATH" = "xyes" || test "x$E
 AM_CONDITIONAL([BUILD_HEAPMATH],[test "x$ENABLED_HEAPMATH" = "xyes" || test "x$ENABLED_USERSETTINGS" = "xyes"])
 AM_CONDITIONAL([BUILD_EXAMPLE_SERVERS],[test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_LEANTLS" = "xno"])
 AM_CONDITIONAL([BUILD_EXAMPLE_CLIENTS],[test "x$ENABLED_EXAMPLES" = "xyes"])
+AM_CONDITIONAL([BUILD_MTC],[test "x$ENABLED_MTC" = "xyes"])
 AM_CONDITIONAL([BUILD_EXAMPLE_ASN1],[test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_ASN_PRINT" = "xyes" && test "$ENABLED_ASN" != "no"])
 AM_CONDITIONAL([BUILD_EXAMPLE_TSP],[test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_TSP" = "xyes"])
 AM_CONDITIONAL([BUILD_OCSP_RESPONDER],[test "x$ENABLED_EXAMPLES" = "xyes" && test "x$ENABLED_OCSP_RESPONDER" = "xyes"])
@@ -13609,6 +13626,7 @@ echo "   * TLS v1.0 (Old):             $ENABLED_TLSV10"
 echo "   * TLS v1.1 (Old):             $ENABLED_OLD_TLS"
 echo "   * TLS v1.2:                   $ENABLED_TLSV12"
 echo "   * TLS v1.3:                   $ENABLED_TLS13"
+echo "   * Merkle Tree Certificates:   $ENABLED_MTC"
 echo "   * Tiny TLS 1.3:               $ENABLED_TINYTLS13"
 echo "   * RPK:                        $ENABLED_RPK"
 echo "   * Post-handshake Auth:        $ENABLED_TLS13_POST_AUTH"

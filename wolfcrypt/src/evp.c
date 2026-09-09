@@ -53,6 +53,9 @@
 #ifdef HAVE_CURVE448
 #include <wolfssl/wolfcrypt/curve448.h>
 #endif
+#ifdef WOLFSSL_HAVE_MLDSA
+#include <wolfssl/wolfcrypt/wc_mldsa.h>
+#endif
 
 #include <wolfssl/wolfcrypt/wc_compat.h>
 
@@ -13258,6 +13261,70 @@ static int PrintPubKeyDH(WOLFSSL_BIO* out, const byte* pkey, int pkeySz,
 }
 #endif /* WOLFSSL_DH_EXTRA */
 
+#ifdef WOLFSSL_HAVE_MLDSA
+/* Print an ML-DSA public key in the format used by OpenSSL's X509 printer. */
+static int PrintPubKeyMlDsa(WOLFSSL_BIO* out, const byte* pkey, int pkeySz,
+    int indent, word32 oid, WOLFSSL_ASN1_PCTX* pctx)
+{
+    const char* name;
+    int expectedSz;
+    char line[40];
+    int lineSz;
+
+    (void)pctx;
+
+    switch (oid) {
+        case ML_DSA_44k:
+            name = "ML-DSA-44";
+            expectedSz = WC_MLDSA_44_PUB_KEY_SIZE;
+            break;
+        case ML_DSA_65k:
+            name = "ML-DSA-65";
+            expectedSz = WC_MLDSA_65_PUB_KEY_SIZE;
+            break;
+        case ML_DSA_87k:
+            name = "ML-DSA-87";
+            expectedSz = WC_MLDSA_87_PUB_KEY_SIZE;
+            break;
+    #ifdef WOLFSSL_MLDSA_FIPS204_DRAFT
+        case DILITHIUM_LEVEL2k:
+            name = "Dilithium Level 2";
+            expectedSz = WC_MLDSA_44_PUB_KEY_SIZE;
+            break;
+        case DILITHIUM_LEVEL3k:
+            name = "Dilithium Level 3";
+            expectedSz = WC_MLDSA_65_PUB_KEY_SIZE;
+            break;
+        case DILITHIUM_LEVEL5k:
+            name = "Dilithium Level 5";
+            expectedSz = WC_MLDSA_87_PUB_KEY_SIZE;
+            break;
+    #endif
+        default:
+            return WOLFSSL_FAILURE;
+    }
+
+    if (pkey == NULL || pkeySz != expectedSz) {
+        return WOLFSSL_FAILURE;
+    }
+    if (Indent(out, indent) != 0) {
+        return WOLFSSL_FAILURE;
+    }
+    lineSz = XSNPRINTF(line, sizeof(line), "%s Public-Key:\n", name);
+    if ((lineSz < 0) || (lineSz >= (int)sizeof(line)) ||
+            wolfSSL_BIO_write(out, line, lineSz) <= 0) {
+        return WOLFSSL_FAILURE;
+    }
+    if (Indent(out, indent) != 0 ||
+            wolfSSL_BIO_write(out, "pub:\n", 5) <= 0) {
+        return WOLFSSL_FAILURE;
+    }
+
+    return PrintHexWithColon(out, pkey, pkeySz, indent + 4,
+        1 /* lower case */);
+}
+#endif /* WOLFSSL_HAVE_MLDSA */
+
 /* wolfSSL_EVP_PKEY_print_public parses the specified key then
  * outputs public key info in human readable format to the specified BIO.
  * White spaces of the same number which 'indent" gives, will be added to
@@ -13269,7 +13336,7 @@ static int PrintPubKeyDH(WOLFSSL_BIO* out, const byte* pkey, int pkeySz,
  * pctx    context(not used)
  * Returns 1 on success, 0 or negative on error, -2 means specified key
  * algo is not supported.
- * Can handle RSA, ECC, DSA and DH public keys.
+ * Can handle RSA, ECC, DSA, DH and ML-DSA public keys.
  */
 int wolfSSL_EVP_PKEY_print_public(WOLFSSL_BIO* out,
     const WOLFSSL_EVP_PKEY* pkey, int indent, WOLFSSL_ASN1_PCTX* pctx)
@@ -13286,7 +13353,7 @@ int wolfSSL_EVP_PKEY_print_public(WOLFSSL_BIO* out,
         return 0;
     }
 #if !defined(NO_RSA) || defined(HAVE_ECC) || !defined(NO_DSA) || \
-    defined(WOLFSSL_DH_EXTRA)
+    defined(WOLFSSL_DH_EXTRA) || defined(WOLFSSL_HAVE_MLDSA)
     if (indent < 0) {
         indent = 0;
     }
@@ -13354,6 +13421,21 @@ int wolfSSL_EVP_PKEY_print_public(WOLFSSL_BIO* out,
                         pkey->pkey_sz,            /* raw pkey size */
                         indent,                   /* indent size */
                         keybits,                  /* bit length of the key */
+                        pctx);                    /* not used */
+#else
+            res = WOLFSSL_UNKNOWN;       /* not supported algo */
+#endif
+            break;
+
+        case WC_EVP_PKEY_DILITHIUM:
+
+#if defined(WOLFSSL_HAVE_MLDSA)
+            res = PrintPubKeyMlDsa(
+                        out,
+                        (byte*)(pkey->pkey.ptr),  /* buffer for raw public key */
+                        pkey->pkey_sz,            /* raw public key size */
+                        indent,                   /* indent size */
+                        (word32)WOLFSSL_ATOMIC_LOAD(pkey->mldsaOID),
                         pctx);                    /* not used */
 #else
             res = WOLFSSL_UNKNOWN;       /* not supported algo */

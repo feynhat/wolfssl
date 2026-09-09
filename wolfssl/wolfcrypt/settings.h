@@ -4852,10 +4852,12 @@ blinding by defining WC_BLINDING_NO_RNG_ACKNOWLEDGE_WEAKNESS."
     #define WOLFSSL_PEM_TO_DER
 #endif
 
-/* Parts of the openssl compatibility layer require peer certs */
+/* Parts of the openssl compatibility layer and MTC verification require peer
+ * certs. */
 #if (defined(OPENSSL_EXTRA) || defined(OPENSSL_ALL) || \
      defined(WOLFSSL_NGINX) || defined(WOLFSSL_HAPROXY) || \
-     defined(HAVE_LIGHTY)) && !defined(NO_CERTS) && !defined(NO_KEEP_PEER_CERT)
+     defined(HAVE_LIGHTY) || defined(WOLFSSL_MTC)) && !defined(NO_CERTS) && \
+     !defined(NO_KEEP_PEER_CERT)
     #undef  KEEP_PEER_CERT
     #define KEEP_PEER_CERT
 #endif

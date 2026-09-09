@@ -37,6 +37,9 @@
 #ifdef OPENSSL_EXTRA
     #include <wolfssl/wolfio.h>
 #endif
+#ifdef WOLFSSL_MTC
+    #include "src/mtc/mtc_parse.h"
+#endif
 
 /* 16 times MAX_X509_SIZE should be more than enough to read any X509
  * certificate file */
@@ -7714,6 +7717,29 @@ static int X509PrintSignature_ex(WOLFSSL_BIO* bio, byte* sig,
     return ret;
 }
 
+#ifdef WOLFSSL_MTC
+static int X509MtcGetIndex(WOLFSSL_X509* x509, word64* index)
+{
+    byte serial[EXTERNAL_SERIAL_SIZE];
+    int serialSz = (int)sizeof(serial);
+    int i;
+
+    if (index == NULL ||
+            wolfSSL_X509_get_serial_number(x509, serial, &serialSz) !=
+                WOLFSSL_SUCCESS ||
+            serialSz <= 0) {
+        return WOLFSSL_FAILURE;
+    }
+
+    *index = 0;
+    i = serialSz > 6 ? serialSz - 6 : 0;
+    for (; i < serialSz; ++i)
+        *index = (*index << 8) | serial[i];
+
+    return WOLFSSL_SUCCESS;
+}
+#endif
+
 static int X509PrintSignature(WOLFSSL_BIO* bio, WOLFSSL_X509* x509,
         int algOnly, int indent)
 {
@@ -7741,8 +7767,24 @@ static int X509PrintSignature(WOLFSSL_BIO* bio, WOLFSSL_X509* x509,
             return WOLFSSL_FAILURE;
         }
 
+#ifdef WOLFSSL_MTC
+        if (!algOnly && sigNid == WC_NID_id_alg_mtcProof) {
+            MTCProof proof;
+            word64 index;
+
+            if (X509PrintSignature_ex(bio, sig, sigSz, sigNid, 1, indent)
+                    != WOLFSSL_SUCCESS ||
+                    X509MtcGetIndex(x509, &index) != WOLFSSL_SUCCESS ||
+                    mtc_proof_parse(&proof, sig, (size_t)sigSz) != 0 ||
+                    mtc_proof_write_bio(bio, &proof, index, indent + 5) != 0) {
+                XFREE(sig, NULL, DYNAMIC_TYPE_TMP_BUFFER);
+                return WOLFSSL_FAILURE;
+            }
+        }
+        else
+#endif
         if (X509PrintSignature_ex(bio, sig, sigSz, sigNid, algOnly, indent)
-                != WOLFSSL_SUCCESS) {
+                    != WOLFSSL_SUCCESS) {
             XFREE(sig, NULL, DYNAMIC_TYPE_TMP_BUFFER);
             return WOLFSSL_FAILURE;
         }
@@ -7799,6 +7841,53 @@ static int X509PrintPubKey(WOLFSSL_BIO* bio, WOLFSSL_X509* x509, int indent)
             if (wolfSSL_BIO_write(bio, scratch, len) <= 0)
                 return WOLFSSL_FAILURE;
             break;
+    #endif
+    #ifdef WOLFSSL_HAVE_MLDSA
+        case ML_DSA_44k:
+        case ML_DSA_65k:
+        case ML_DSA_87k:
+        #ifdef WOLFSSL_MLDSA_FIPS204_DRAFT
+        case DILITHIUM_LEVEL2k:
+        case DILITHIUM_LEVEL3k:
+        case DILITHIUM_LEVEL5k:
+        #endif
+        {
+            const char* algName;
+
+            switch (x509->pubKeyOID) {
+                case ML_DSA_44k:
+                    algName = "ML-DSA-44";
+                    break;
+                case ML_DSA_65k:
+                    algName = "ML-DSA-65";
+                    break;
+                case ML_DSA_87k:
+                    algName = "ML-DSA-87";
+                    break;
+            #ifdef WOLFSSL_MLDSA_FIPS204_DRAFT
+                case DILITHIUM_LEVEL2k:
+                    algName = "Dilithium Level 2";
+                    break;
+                case DILITHIUM_LEVEL3k:
+                    algName = "Dilithium Level 3";
+                    break;
+                case DILITHIUM_LEVEL5k:
+                    algName = "Dilithium Level 5";
+                    break;
+            #endif
+                default:
+                    return WOLFSSL_FAILURE;
+            }
+
+            len = XSNPRINTF(scratch, MAX_WIDTH,
+                    "%*sPublic Key Algorithm: %s\n", indent + 4, "",
+                    algName);
+            if ((len < 0) || (len >= MAX_WIDTH))
+                return WOLFSSL_FAILURE;
+            if (wolfSSL_BIO_write(bio, scratch, len) <= 0)
+                return WOLFSSL_FAILURE;
+            break;
+        }
     #endif
         default:
                 WOLFSSL_MSG("Unknown key type");

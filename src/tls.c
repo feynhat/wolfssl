@@ -52,6 +52,7 @@
  * HAVE_TRUSTED_CA:          Trusted CA Indication extension       default: off
  * HAVE_RPK:                 Raw Public Key support (RFC 7250)     default: off
  * HAVE_ECH:                 Encrypted Client Hello support        default: off
+ * WOLFSSL_MTC:              Merkle Tree Certificate support       default: off
  * WOLFSSL_NO_SIGALG:        Disable signature algorithms ext      default: off
  * WOLFSSL_NO_CA_NAMES:      Disable CA Names in CertificateReq   default: off
  * WOLFSSL_NO_SERVER_GROUPS_EXT: Don't send server groups ext      default: off
@@ -1593,6 +1594,10 @@ static WC_INLINE word16 TLSX_ToSemaphore(word16 type)
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_DUAL_ALG_CERTS)
         case TLSX_CKS:
             return 66;
+#endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+        case TLSX_TRUST_ANCHORS:
+            return 67;
 #endif
         default:
             if (type > 62) {
@@ -3266,6 +3271,16 @@ int TLSX_UseTrustedCA(TLSX** extensions, byte type,
 #define TCA_VERIFY_PARSE(a, b) 0
 
 #endif /* HAVE_TRUSTED_CA */
+
+/******************************************************************************/
+/* TLS Trust Anchor Identifiers                                               */
+/******************************************************************************/
+
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+    #define WOLFSSL_MTC_TRUST_ANCHORS_INCLUDED
+    #include "src/mtc/trust_anchors.c"
+    #undef WOLFSSL_MTC_TRUST_ANCHORS_INCLUDED
+#endif
 
 /******************************************************************************/
 /* Max Fragment Length Negotiation                                            */
@@ -15322,6 +15337,12 @@ void TLSX_FreeAll(TLSX* list, void* heap)
                 /* nothing to do */
                 break;
 #endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+            case TLSX_TRUST_ANCHORS:
+                WOLFSSL_MSG("Trust Anchor IDs extension free");
+                TAI_FREE(extension->data, heap);
+                break;
+#endif
             default:
                 break;
         }
@@ -15493,6 +15514,13 @@ static int TLSX_GetSize(TLSX* list, byte* semaphore, byte msgType,
             case TLSX_KEY_SHARE:
                 length += KS_GET_SIZE((KeyShareEntry*)extension->data, msgType);
                 break;
+#endif
+
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+            case TLSX_TRUST_ANCHORS:
+                length += TAI_GET_SIZE(extension->data);
+                break;
+
 #endif
 
 #ifdef WOLFSSL_TLS13
@@ -15786,6 +15814,14 @@ static int TLSX_Write(TLSX* list, byte* output, byte* semaphore,
                                                       output + offset, msgType);
                 break;
 #endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+            case TLSX_TRUST_ANCHORS:
+                WOLFSSL_MSG("Trust Anchor IDs extension to write");
+                offset += TAI_WRITE(extension->data, output + offset);
+                break;
+
+#endif
+
 #ifdef WOLFSSL_TLS13
             case TLSX_SUPPORTED_VERSIONS:
                 WOLFSSL_MSG("Supported Versions extension to write");
@@ -18024,6 +18060,9 @@ WOLFSSL_TEST_VIS int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length,
         #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_DUAL_ALG_CERTS)
             || (type == TLSX_CKS)
         #endif
+        #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+            || (type == TLSX_TRUST_ANCHORS)
+        #endif
             )
         {
             /* Detect duplicate recognized extensions. */
@@ -18392,6 +18431,16 @@ WOLFSSL_TEST_VIS int TLSX_Parse(WOLFSSL* ssl, const byte* input, word16 length,
                 ret = ETM_PARSE(ssl, input + offset, size, msgType);
                 break;
 #endif /* HAVE_ENCRYPT_THEN_MAC */
+
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+            case TLSX_TRUST_ANCHORS:
+                WOLFSSL_MSG("Trust Anchor IDs extension received");
+                if (!IsAtLeastTLSv1_3(ssl->version))
+                    return EXT_NOT_ALLOWED;
+                ret = TAI_PARSE(ssl, input + offset, size, msgType);
+                break;
+
+#endif
 
 #ifdef WOLFSSL_TLS13
             case TLSX_SUPPORTED_VERSIONS:

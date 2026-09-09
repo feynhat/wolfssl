@@ -4810,6 +4810,8 @@ static int ParseCRL_Extensions(DecodedCRL* dcrl, const byte* buf, word32* inOutI
     /* RFC 9802 id-alg-xmssmt-hashsig: 1.3.6.1.5.5.7.6.35 */
     static const byte sigXmssMtOid[] = {43, 6, 1, 5, 5, 7, 6, 35};
 #endif /* WOLFSSL_HAVE_XMSS */
+/* Experimental id-alg-mtcProof: 1.3.6.1.4.1.44363.47.0 */
+static const byte sigMtcProofOid[] = {43, 6, 1, 4, 1, 130, 218, 75, 47, 0};
 
 /* keyType */
 #ifndef NO_DSA
@@ -5289,6 +5291,9 @@ static const byte extCrlNumberOid[] = {85, 29, 20};
 #ifdef WOLFSSL_SUBJ_INFO_ACC
     static const byte extSubjInfoAccessOid[] = {43, 6, 1, 5, 5, 7, 1, 11};
 #endif
+/* Experimental id-pe-mtcCertificationAuthority:
+ * 1.3.6.1.4.1.44363.47.2 */
+static const byte extMtcCaOid[] = {43, 6, 1, 4, 1, 130, 218, 75, 47, 2};
 
 /* certAuthInfoType */
 static const byte extAuthInfoOcspOid[] = {43, 6, 1, 5, 5, 7, 48, 1};
@@ -6088,6 +6093,10 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     *oidSz = sizeof(sigXmssMtOid);
                     break;
             #endif /* WOLFSSL_HAVE_XMSS */
+                case CTC_MTC_PROOF:
+                    oid = sigMtcProofOid;
+                    *oidSz = sizeof(sigMtcProofOid);
+                    break;
                 default:
                     break;
             }
@@ -6460,6 +6469,10 @@ const byte* OidFromId(word32 id, word32 type, word32* oidSz)
                     *oidSz = sizeof(extSubjInfoAccessOid);
                     break;
             #endif
+                case MTC_CA_OID:
+                    oid = extMtcCaOid;
+                    *oidSz = sizeof(extMtcCaOid);
+                    break;
                 default:
                     break;
             }
@@ -7879,6 +7892,14 @@ static int GetOID(const byte* input, word32* inOutIdx, word32* oid,
     idx += actualOidSz;
 
 #ifdef WOLFSSL_OLD_OID_SUM
+    /* The old byte sum for id-alg-mtcProof collides with
+     * ecdsa-with-SHA384. Remap the exact DER OID to its distinct identifier
+     * before validating it below. */
+    if ((actualOidSz == sizeof(sigMtcProofOid)) &&
+        (XMEMCMP(actualOid, sigMtcProofOid, sizeof(sigMtcProofOid)) == 0)) {
+        *oid = CTC_MTC_PROOF;
+    }
+
 #ifdef WOLFSSL_FPKI
     /* Due to the large number of OIDs for FPKI certificate policy, there
        are multiple collsisions.  Handle them in a dedicated function,
@@ -16568,7 +16589,8 @@ static WC_INLINE int IsSigAlgoECDSA(word32 algoOID)
 
 /* Determines whether the signature algorithm's AlgorithmIdentifier omits
  * the trailing NULL parameters element. True for ECC / EdDSA / SM2 and
- * for the post-quantum families (Falcon, ML-DSA , SLH-DSA, LMS, XMSS).
+ * for the post-quantum families (Falcon, ML-DSA, SLH-DSA, LMS, XMSS) and
+ * MTC proofs.
  *
  * @param [in] algoOID  Algorithm OID.
  * @return  1 when the algorithm encodes its AlgorithmIdentifier without
@@ -16579,7 +16601,7 @@ static WC_INLINE int IsSigAlgoNoParams(word32 algoOID)
 {
     (void)algoOID;
 
-    return (0
+    return ((algoOID == CTC_MTC_PROOF)
         #ifdef HAVE_ECC
               || IsSigAlgoECDSA(algoOID)
         #endif
@@ -20721,6 +20743,102 @@ static int DecodeAcmeId(const byte* input, word32 sz, DecodedCert* cert)
 }
 #endif /* WOLFSSL_ACME_OID */
 
+#ifdef WOLFSSL_MTC
+/* Decode a non-negative DER INTEGER constrained to 0..2^64-1. */
+static int DecodeMtcUint64(const byte* input, word32* idx, word32 maxIdx,
+                           word64* value)
+{
+    word32 contentIdx;
+    word32 end;
+    word64 decoded = 0;
+    int length;
+    int i;
+
+    if (GetASNHeader(input, ASN_INTEGER, idx, &length, maxIdx) < 0 ||
+            length <= 0) {
+        return ASN_PARSE_E;
+    }
+
+    contentIdx = *idx;
+    end = contentIdx + (word32)length;
+
+    /* A set high bit without a sign octet encodes a negative INTEGER. */
+    if ((input[contentIdx] & 0x80U) != 0U)
+        return ASN_PARSE_E;
+
+    /* DER permits one leading zero only when needed to keep the value
+     * positive. Remove that sign octet before enforcing the uint64 limit. */
+    if (length > 1 && input[contentIdx] == 0U) {
+        if ((input[contentIdx + 1U] & 0x80U) == 0U)
+            return ASN_PARSE_E;
+        contentIdx++;
+        length--;
+    }
+    if (length > 8)
+        return ASN_PARSE_E;
+
+    for (i = 0; i < length; i++)
+        decoded = (decoded << 8) | input[contentIdx + (word32)i];
+
+    *idx = end;
+    *value = decoded;
+    return 0;
+}
+
+/* Decode the draft MTCCertificationAuthority extension value:
+ *
+ *   SEQUENCE {
+ *       logHash   AlgorithmIdentifier,
+ *       sigAlg    AlgorithmIdentifier,
+ *       minSerial INTEGER (0..2^64-1),
+ *       maxSerial INTEGER (0..2^64-1)
+ *   }
+ */
+static int DecodeMtcCertificationAuthority(const byte* input, word32 sz,
+                                           DecodedCert* cert)
+{
+    word32 idx = 0;
+    word32 seqEnd;
+    word32 oidSz;
+    word32 logHashOID;
+    word32 sigOID;
+    word64 minSerial;
+    word64 maxSerial;
+    byte sigParamsAbsent = TRUE;
+    int length;
+
+    if (GetSequence(input, &idx, &length, sz) < 0 || length < 0 ||
+            (word32)length != sz - idx) {
+        return ASN_PARSE_E;
+    }
+    seqEnd = idx + (word32)length;
+
+    if (GetAlgoId(input, &idx, &logHashOID, oidHashType, seqEnd) < 0 ||
+            OidFromId(logHashOID, oidHashType, &oidSz) == NULL) {
+        return ASN_PARSE_E;
+    }
+    if (GetAlgoIdEx(input, &idx, &sigOID, oidSigType, seqEnd,
+                    &sigParamsAbsent) < 0 ||
+            OidFromId(sigOID, oidSigType, &oidSz) == NULL) {
+        return ASN_PARSE_E;
+    }
+    if (IsSigAlgoNoParams(sigOID) && !sigParamsAbsent)
+        return ASN_PARSE_E;
+
+    if (DecodeMtcUint64(input, &idx, seqEnd, &minSerial) < 0 ||
+            DecodeMtcUint64(input, &idx, seqEnd, &maxSerial) < 0 ||
+            idx != seqEnd) {
+        return ASN_PARSE_E;
+    }
+
+    cert->extMtcCaLogHashOID = logHashOID;
+    cert->extMtcCaSigOID = sigOID;
+    cert->extMtcCaMinSerial = minSerial;
+    cert->extMtcCaMaxSerial = maxSerial;
+    return 0;
+}
+#endif /* WOLFSSL_MTC */
+
 #ifdef WOLFSSL_ASN_TEMPLATE
 /* ASN.1 template for KeyPurposeId.
  * X.509: RFC 5280, 4.2.1.12 - Extended Key Usage.
@@ -22047,6 +22165,20 @@ WOLFSSL_TEST_VIS int DecodeExtensionType(const byte* input, word32 length,
                 return ASN_PARSE_E;
             break;
     #endif
+    #ifdef WOLFSSL_MTC
+        case MTC_CA_OID:
+            VERIFY_AND_SET_OID(cert->extMtcCaSet);
+            cert->extMtcCaCrit = critical ? 1 : 0;
+            if (!critical) {
+                WOLFSSL_MSG("id-pe-mtcCertificationAuthority must be critical");
+                ret = ASN_CRIT_EXT_E;
+            }
+            else if (DecodeMtcCertificationAuthority(&input[idx], length,
+                                                      cert) < 0) {
+                ret = ASN_PARSE_E;
+            }
+            break;
+    #endif /* WOLFSSL_MTC */
         default:
             if (isUnknownExt != NULL)
                 *isUnknownExt = 1;

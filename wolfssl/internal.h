@@ -3026,6 +3026,9 @@ typedef struct Options Options;
 /* The 0xFF section is experimental/custom/personal use */
 #define TLSXT_CKS                        0xff92 /* X9.146 */
 #define TLSXT_RENEGOTIATION_INFO         0xff01
+#ifdef WOLFSSL_MTC
+    #define TLSXT_TRUST_ANCHORS          WOLFSSL_TRUST_ANCHORS_EXT_TYPE
+#endif
 #define TLSXT_KEY_QUIC_TP_PARAMS_DRAFT   0xffa5 /* from */
                                                 /* draft-ietf-quic-tls-27 */
 
@@ -3095,6 +3098,9 @@ typedef enum {
 #endif
 #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_DUAL_ALG_CERTS)
     TLSX_CKS                        = TLSXT_CKS,
+#endif
+#if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+    TLSX_TRUST_ANCHORS              = TLSXT_TRUST_ANCHORS,
 #endif
 #ifdef WOLFSSL_QUIC
     TLSX_KEY_QUIC_TP_PARAMS_DRAFT   = TLSXT_KEY_QUIC_TP_PARAMS_DRAFT,
@@ -6479,6 +6485,11 @@ struct WOLFSSL {
 #endif
 #ifdef HAVE_TLS_EXTENSIONS
     TLSX* extensions;                  /* RFC 6066 TLS Extensions data */
+    #if defined(WOLFSSL_TLS13) && defined(WOLFSSL_MTC)
+        byte* peerTrustAnchorIds;      /* peer's length-prefixed IDs */
+        word16 peerTrustAnchorIdsSz;
+        byte peerTrustAnchorIdsPresent;
+    #endif
     #ifdef HAVE_MAX_FRAGMENT
         word16 max_fragment;
     #endif

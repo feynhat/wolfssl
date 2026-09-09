@@ -1,0 +1,33 @@
+# vim:ft=automake
+# All paths should be given relative to the root
+
+if BUILD_EXAMPLE_CLIENTS
+if BUILD_MTC
+noinst_PROGRAMS += examples/mtc/mtc_tls13_client
+examples_mtc_mtc_tls13_client_SOURCES = \
+    examples/mtc/mtc_tls13_client.c
+examples_mtc_mtc_tls13_client_LDADD = \
+    src/libwolfssl@LIBSUFFIX@.la $(LIB_STATIC_ADD)
+examples_mtc_mtc_tls13_client_DEPENDENCIES = \
+    src/libwolfssl@LIBSUFFIX@.la
+endif
+endif
+
+if BUILD_EXAMPLE_SERVERS
+if BUILD_MTC
+noinst_PROGRAMS += examples/mtc/mtc_tls13_server
+examples_mtc_mtc_tls13_server_SOURCES = \
+    examples/mtc/mtc_tls13_server.c
+examples_mtc_mtc_tls13_server_LDADD = \
+    src/libwolfssl@LIBSUFFIX@.la $(LIB_STATIC_ADD)
+examples_mtc_mtc_tls13_server_DEPENDENCIES = \
+    src/libwolfssl@LIBSUFFIX@.la
+endif
+endif
+
+EXTRA_DIST += \
+    examples/mtc/README.md \
+    examples/mtc/mtc_inclusion_proof.c \
+    examples/mtc/trust_anchor_id.h \
+    examples/mtc/mtc_tls13_client.c \
+    examples/mtc/mtc_tls13_server.c

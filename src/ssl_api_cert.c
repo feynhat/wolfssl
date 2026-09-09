@@ -2751,8 +2751,13 @@ int wolfSSL_get0_chain_certs(WOLFSSL *ssl, WOLF_STACK_OF(WOLFSSL_X509) **sk)
         WOLFSSL_X509* ret = NULL;
         WOLFSSL_ENTER("wolfSSL_get_peer_certificate");
         if (ssl != NULL) {
-            if (ssl->peerCert.issuer.sz)
+            /* Empty issuer Names are valid for MTC certificates. Use the
+             * retained DER, rather than the conventional issuer Name, to
+             * determine whether a peer certificate is available. */
+            if (ssl->peerCert.derCert != NULL &&
+                    ssl->peerCert.derCert->length > 0) {
                 ret = wolfSSL_X509_dup(&ssl->peerCert);
+            }
 #ifdef SESSION_CERTS
             else if (ssl->session->chain.count > 0) {
                 if (DecodeToX509(&ssl->peerCert,

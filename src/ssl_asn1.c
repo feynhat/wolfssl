@@ -5002,6 +5002,9 @@ const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
       "nameConstraints", "X509v3 Name Constraints"},
     { WC_NID_certificate_policies, CERT_POLICY_OID, oidCertExtType,
       "certificatePolicies", "X509v3 Certificate Policies"},
+    { WC_NID_id_pe_mtcCertificationAuthority, MTC_CA_OID, oidCertExtType,
+      WC_SN_id_pe_mtcCertificationAuthority,
+      WC_LN_id_pe_mtcCertificationAuthority },
 #if defined(WOLFSSL_APACHE_HTTPD) && defined(OPENSSL_EXTRA)
     /* "1.3.6.1.4.1.311.20.2.3" */
     { WC_NID_ms_upn, WOLFSSL_MS_UPN_SUM, oidCertExtType, WOLFSSL_SN_MS_UPN,
@@ -5164,6 +5167,8 @@ const WOLFSSL_ObjectInfo wolfssl_object_info[] = {
         /* oidSigType */
         /* Ordered most commonly used first: entries of a group are searched
          * linearly. Legacy signature algorithms are last. */
+        { WC_NID_id_alg_mtcProof, CTC_MTC_PROOF, oidSigType,
+          WC_SN_id_alg_mtcProof, WC_LN_id_alg_mtcProof },
     #ifdef HAVE_ED25519
         { WC_NID_ED25519, CTC_ED25519, oidSigType, "ED25519", "ED25519"},
     #endif
@@ -6260,6 +6265,21 @@ int wc_OBJ_sn2nid(const char *sn)
         if (ret == 0) {
             /* sum OID */
             sum = wc_oid_sum(out, outSz);
+        #ifdef WOLFSSL_OLD_OID_SUM
+            /* id-alg-mtcProof shares the old byte sum with
+             * ecdsa-with-SHA384. Match its DER before consulting the
+             * sum-based object table. */
+            {
+                word32 mtcOidSz = 0;
+                const byte* mtcOid = OidFromId(CTC_MTC_PROOF, oidSigType,
+                                               &mtcOidSz);
+
+                if ((mtcOid != NULL) && (outSz == mtcOidSz) &&
+                        (XMEMCMP(out, mtcOid, outSz) == 0)) {
+                    sum = CTC_MTC_PROOF;
+                }
+            }
+        #endif
         }
     #endif /* WOLFSSL_CERT_EXT */
 

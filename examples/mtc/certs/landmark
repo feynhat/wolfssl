@@ -1,0 +1,142 @@
+Wrote CA certificate "sk-out/ca_cert.pem".
+
+Wrote certificate for entry 10 at "sk-out/cert_10_0.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.2
+
+Wrote certificate for entry 10 at "sk-out/cert_10_1.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.2
+
+Wrote certificate for entry 10 at "sk-out/cert_10_2.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.2
+
+Wrote certificate for entry 10 at "sk-out/cert_10_3.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+
+Wrote certificate for entry 10 at "sk-out/cert_10_4.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.3.1
+
+Wrote certificate for entry 10 at "sk-out/cert_10_5.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.3.2
+
+Wrote certificate for entry 10 at "sk-out/cert_10_6.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.3.3
+
+Wrote certificate for entry 10 at "sk-out/cert_10_7.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.3.4
+
+Wrote certificate for entry 10 at "sk-out/cert_10_8.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.2
+  Cosigned by 32473.2.3
+  Cosigned by 32473.3.1
+  Cosigned by 32473.3.2
+  Cosigned by 32473.3.3
+  Cosigned by 32473.3.4
+
+Wrote certificate for entry 10 at "sk-out/cert_10_9.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.2
+  Cosigned by 32473.2.3
+  Cosigned by 32473.3.1
+  Cosigned by 32473.3.2
+  Cosigned by 32473.3.3
+  Cosigned by 32473.3.4
+
+Wrote certificate for entry 10 at "sk-out/cert_10_10.pem".
+  Subtree [8, 11) with hash kgOt5ar7KK9RKA5ADl8eT8FmwkbFOxGugnvTaC7yzt4=
+
+Wrote certificate for entry 10 at "sk-out/cert_10_11.pem".
+  Subtree [8, 16) with hash OJNpFmpUkGsS1bH89EDwwufH0rrvpPkqTH01X8SSMwA=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 10 at "sk-out/cert_10_12.pem".
+  Subtree [0, 32) with hash dT8R+colBrjuBXgLCIVJf+vWO7hf0LpNzwLYnwNUi3o=
+
+Wrote certificate for entry 32 at "sk-out/cert_32_0.pem".
+  Subtree [32, 34) with hash X6d2Q/S7+tuhs2rFCsSBRtvgd1JbMeUwnW5lKYbBRu0=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 32 at "sk-out/cert_32_1.pem".
+  Subtree [32, 34) with hash X6d2Q/S7+tuhs2rFCsSBRtvgd1JbMeUwnW5lKYbBRu0=
+
+Wrote certificate for entry 33 at "sk-out/cert_33_0.pem".
+  Subtree [32, 34) with hash X6d2Q/S7+tuhs2rFCsSBRtvgd1JbMeUwnW5lKYbBRu0=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 33 at "sk-out/cert_33_1.pem".
+  Subtree [32, 34) with hash X6d2Q/S7+tuhs2rFCsSBRtvgd1JbMeUwnW5lKYbBRu0=
+
+Wrote certificate for entry 2034 at "sk-out/cert_2034_0.pem".
+  Subtree [2034, 2035) with hash SH5CCwd4E6DwB/zP5y9DCdtT/spjx0AgJ06JD58cLrk=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 2034 at "sk-out/cert_2034_1.pem".
+  Subtree [1024, 2036) with hash xRrfjkCG9JEuT7n5AZQqc6F7EEjHyP48qAypbTWkOtM=
+
+Wrote certificate for entry 2035 at "sk-out/cert_2035_0.pem".
+  Subtree [2035, 2036) with hash eAygfLj0PxcFffIlFaKxf+l/AfHV5DecFDuINxnI7XQ=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 2035 at "sk-out/cert_2035_1.pem".
+  Subtree [1024, 2036) with hash xRrfjkCG9JEuT7n5AZQqc6F7EEjHyP48qAypbTWkOtM=
+
+Wrote certificate for entry 2035 at "sk-out/cert_2035_2.pem".
+  Subtree [1024, 2036) with hash xRrfjkCG9JEuT7n5AZQqc6F7EEjHyP48qAypbTWkOtM=
+
+Wrote certificate for entry 2078 at "sk-out/cert_2078_0.pem".
+  Subtree [2048, 2079) with hash 0wfrk3YYrP77rmz7kTYmN/QcwOZ9ZU6gMnFQUSQBj+w=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 2078 at "sk-out/cert_2078_1.pem".
+  Subtree [2048, 2122) with hash Jt+HRAoig0oj+S5C+Lz2nctHmY2ArEyIYx/8ibVPIF8=
+
+Wrote certificate for entry 2121 at "sk-out/cert_2121_0.pem".
+  Subtree [2112, 2122) with hash NQqk6F4HMQdMomgx7j3DNcVZNk2xC+iBqgw+23Pa6J8=
+  Cosigned by 32473.1
+  Cosigned by 32473.2.1
+  Cosigned by 32473.2.3
+
+Wrote certificate for entry 2121 at "sk-out/cert_2121_1.pem".
+  Subtree [2048, 2122) with hash Jt+HRAoig0oj+S5C+Lz2nctHmY2ArEyIYx/8ibVPIF8=
+
+Landmark 1 at tree size 34:
+  Landmark subtree [0, 32) with hash dT8R+colBrjuBXgLCIVJf+vWO7hf0LpNzwLYnwNUi3o=
+  Landmark subtree [32, 34) with hash X6d2Q/S7+tuhs2rFCsSBRtvgd1JbMeUwnW5lKYbBRu0=
+Landmark 2 at tree size 2036:
+  Landmark subtree [0, 1024) with hash YSvVUDF2gIV+C6z8J7pGlZcU1iHhf6US9EfEUoMn3Qw=
+  Landmark subtree [1024, 2036) with hash xRrfjkCG9JEuT7n5AZQqc6F7EEjHyP48qAypbTWkOtM=
+Landmark 3 at tree size 2122:
+  Landmark subtree [2032, 2048) with hash tftwivCsEQ6d0hi2+LMx92g+ybflfl7MxDCq/RVWd7A=
+  Landmark subtree [2048, 2122) with hash Jt+HRAoig0oj+S5C+Lz2nctHmY2ArEyIYx/8ibVPIF8=

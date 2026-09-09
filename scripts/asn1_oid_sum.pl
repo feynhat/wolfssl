@@ -493,6 +493,7 @@ my @upn = ( 1, 3, 6, 1, 4, 1, 311, 20, 2, 3 );
 my @subj_alt_pub_key_info = ( 2, 5, 29, 72 );
 my @alt_sig_alg = ( 2, 5, 29, 73 );
 my @alt_sig_val = ( 2, 5, 29, 74 );
+my @mtc_ca = ( 1, 3, 6, 1, 4, 1, 44363, 47, 2 );
 
 my @exts = (
     { name => "BASIC_CA",               oid => \@basic_ca               },
@@ -523,6 +524,7 @@ my @exts = (
     { name => "SUBJ_ALT_PUB_KEY_INFO",  oid => \@subj_alt_pub_key_info  },
     { name => "ALT_SIG_ALG",            oid => \@alt_sig_alg            },
     { name => "ALT_SIG_VAL",            oid => \@alt_sig_val            },
+    { name => "MTC_CA",                 oid => \@mtc_ca                 },
 );
 
 print_sum_enum("Extensions", "_OID", \@exts);
@@ -1136,6 +1138,7 @@ my @ctc_sha3_384_rsa = ( 2, 16, 840, 1, 101, 3, 4, 3, 15 );
 my @ctc_sha3_512_rsa = ( 2, 16, 840, 1, 101, 3, 4, 3, 16 );
 my @ctc_rsassapss = ( 1, 2, 840, 113549, 1, 1, 10 );
 my @ctc_sm3_sm2 = ( 1, 2, 156, 10197, 1, 501 );
+my @ctc_mtc_proof = ( 1, 3, 6, 1, 4, 1, 44363, 47, 0 );
 
 my @sig_types = (
     { name => "CTC_SHAwDSA",                oid => \@ctc_sha_dsa            },
@@ -1213,6 +1216,10 @@ my @sig_types = (
                                             same => 1                       },
     { name => "CTC_XMSSMT",                 oid => \@xmssmt,
                                             same => 1                       },
+    # The old byte sum collides with CTC_SHA384wECDSA. Keep a distinct
+    # identifier and remap the exact DER OID in GetOID().
+    { name => "CTC_MTC_PROOF",              oid => \@ctc_mtc_proof,
+                                            add_sum => 100000               },
 );
 
 print_enum("Ctc_SigType", "", \@sig_types, 32, 48);
@@ -1330,4 +1337,3 @@ my @cert_names = (
 print_enum("CertName_Sum", "_OID", \@cert_names, 40, 0);
 
 print_footer();
-

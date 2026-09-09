@@ -5605,6 +5605,14 @@ size_t wolfSSL_get_client_random(const WOLFSSL* ssl, unsigned char* out,
         /* reset error */
         ssl->error = 0;
 
+#if defined(WOLFSSL_MTC) && defined(WOLFSSL_TLS13) && \
+    defined(HAVE_TLS_EXTENSIONS)
+        XFREE(ssl->peerTrustAnchorIds, ssl->heap, DYNAMIC_TYPE_TLSX);
+        ssl->peerTrustAnchorIds = NULL;
+        ssl->peerTrustAnchorIdsSz = 0;
+        ssl->peerTrustAnchorIdsPresent = 0;
+#endif
+
         /* reset option bits */
         ssl->options.isClosed = 0;
         ssl->options.connReset = 0;
@@ -9640,6 +9648,17 @@ int wolfSSL_AsyncEncryptSetSignal(WOLFSSL* ssl, int idx,
 
 
 #ifndef NO_CERT
+#ifdef WOLFSSL_MTC
+#include "src/mtc/cosign.c"
+#include "src/mtc/mtc_cert.c"
+#include "src/mtc/mtc_parse.c"
+#ifndef NO_SHA256
+#define WOLFSSL_MTC_EVALUATOR_ONLY
+#include "src/mtc/mtc.c"
+#undef WOLFSSL_MTC_EVALUATOR_ONLY
+#endif
+#include "src/mtc/verify.c"
+#endif
 #define WOLFSSL_X509_INCLUDED
 #include "src/x509.c"
 #endif
